@@ -11,19 +11,10 @@ dotenv.config({ path: path.join(__dirname, '../../.env') });
 const { Pool } = pkg;
 
 // تكوين الاتصال بقاعدة البيانات PostgreSQL
-console.log('تكوين قاعدة البيانات:', {
-  user: String(process.env.POSTGRES_USER),
-  host: String(process.env.POSTGRES_HOST),
-  database: String(process.env.POSTGRES_DB),
-  port: parseInt(process.env.POSTGRES_PORT) || 5432
-});
+console.log('تكوين قاعدة البيانات: PostgreSQL');
 
 const pool = new Pool({
-  user: String(process.env.POSTGRES_USER),
-  host: String(process.env.POSTGRES_HOST),
-  database: String(process.env.POSTGRES_DB),
-  password: String(process.env.POSTGRES_PASSWORD),
-  port: parseInt(process.env.POSTGRES_PORT) || 5432,
+  connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
