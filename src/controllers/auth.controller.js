@@ -1,0 +1,126 @@
+import { authService } from '../services/auth.service.js';
+
+class AuthController {
+    /**
+     * تسجيل مستخدم جديد
+     */
+    async register(req, res) {
+        try {
+            const { email, password, name } = req.body;
+            
+            authService.validateRequiredFields(
+                { email, password, name },
+                ['email', 'password', 'name']
+            );
+
+            const result = await authService.registerUser(email, password, name);
+            
+            res.status(201).json({
+                success: true,
+                message: 'تم إنشاء الحساب بنجاح',
+                ...result
+            });
+        } catch (error) {
+            this._handleAuthError(error, res);
+        }
+    }
+
+    /**
+     * تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
+     */
+    async login(req, res) {
+        try {
+            const { email, password } = req.body;
+            
+            authService.validateRequiredFields(
+                { email, password },
+                ['email', 'password']
+            );
+
+            const result = await authService.loginWithEmail(email, password);
+            
+            res.status(200).json({
+                success: true,
+                message: 'تم تسجيل الدخول بنجاح',
+                ...result
+            });
+        } catch (error) {
+            this._handleAuthError(error, res);
+        }
+    }
+
+    /**
+     * تسجيل الدخول باستخدام Google
+     */
+    async googleLogin(req, res) {
+        try {
+            let result;
+            
+            if (req.body?.idToken) {
+                const { idToken } = req.body;
+                authService.validateRequiredFields({ idToken }, ['idToken']);
+                result = await authService.loginWithGoogle({ idToken });
+            } else if (req.user) {
+                result = await authService.loginWithGoogle({
+                    googleUser: req.user
+                });
+            } else {
+                throw new Error('بيانات المصادقة غير متوفرة');
+            }
+
+            res.status(200).json({
+                success: true,
+                message: 'تم تسجيل الدخول بنجاح باستخدام Google',
+                ...result
+            });
+        } catch (error) {
+            this._handleAuthError(error, res);
+        }
+    }
+
+    /**
+     * معالجة نجاح مصادقة Google
+     */
+    async handleGoogleCallback(req, res) {
+        try {
+            const result = await authService.loginWithGoogle({
+                googleUser: req.user
+            });
+            
+            res.status(200).json({
+                success: true,
+                message: 'تم تسجيل الدخول بنجاح باستخدام Google',
+                ...result
+            });
+        } catch (error) {
+            this._handleAuthError(error, res);
+        }
+    }
+
+    /**
+     * معالجة أخطاء المصادقة
+     */
+    _handleAuthError(error, res) {
+        console.error('خطأ في المصادقة:', error);
+
+        const errorMapping = {
+            'auth/email-already-in-use': { status: 400, message: 'البريد الإلكتروني مستخدم بالفعل' },
+            'auth/user-not-found': { status: 404, message: 'المستخدم غير موجود' },
+            'auth/wrong-password': { status: 401, message: 'كلمة المرور غير صحيحة' },
+            'auth/invalid-email': { status: 400, message: 'البريد الإلكتروني غير صالح' },
+            'auth/weak-password': { status: 400, message: 'كلمة المرور ضعيفة جداً' }
+        };
+
+        const errorDetails = errorMapping[error.code] || { 
+            status: 500, 
+            message: error.message || 'حدث خطأ في عملية المصادقة'
+        };
+
+        res.status(errorDetails.status).json({
+            success: false,
+            message: errorDetails.message
+        });
+    }
+}
+
+export const authController = new AuthController();
