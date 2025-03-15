@@ -2,7 +2,13 @@ import express from 'express';
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { authController } from '../controllers/auth.controller.js';
-import { validateLoginData, validateRegisterData, validateGoogleLoginData } from '../middleware/validation.middleware.js';
+import {
+    validateLoginData,
+    validateRegisterData,
+    validateGoogleLoginData,
+    validateForgotPasswordData,
+    validateResetPasswordData
+} from '../middleware/validation.middleware.js';
 import { authConfig } from '../config/auth.config.js';
 import jwt from 'jsonwebtoken';
 
@@ -52,6 +58,8 @@ passport.use(new GoogleStrategy({
 router.post('/register', validateRegisterData, authController.register.bind(authController));
 router.post('/login', validateLoginData, authController.login.bind(authController));
 router.post('/google/token', validateGoogleLoginData, authController.googleLogin.bind(authController));
+router.post('/forgot-password', validateForgotPasswordData, authController.forgotPassword.bind(authController));
+router.post('/reset-password', validateResetPasswordData, authController.resetPassword.bind(authController));
 
 // مسارات مصادقة Google
 router.get('/google', passport.authenticate('google', {

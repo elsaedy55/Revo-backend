@@ -100,6 +100,52 @@ class AuthController {
     /**
      * معالجة أخطاء المصادقة
      */
+    /**
+     * طلب إعادة تعيين كلمة المرور
+     */
+    async forgotPassword(req, res) {
+        try {
+            const { email } = req.body;
+            
+            authService.validateRequiredFields(
+                { email },
+                ['email']
+            );
+
+            await authService.forgotPassword(email);
+            
+            res.status(200).json({
+                success: true,
+                message: 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني'
+            });
+        } catch (error) {
+            this._handleAuthError(error, res);
+        }
+    }
+
+    /**
+     * تأكيد إعادة تعيين كلمة المرور
+     */
+    async resetPassword(req, res) {
+        try {
+            const { token, newPassword } = req.body;
+            
+            authService.validateRequiredFields(
+                { token, newPassword },
+                ['token', 'newPassword']
+            );
+
+            await authService.resetPassword(token, newPassword);
+            
+            res.status(200).json({
+                success: true,
+                message: 'تم إعادة تعيين كلمة المرور بنجاح'
+            });
+        } catch (error) {
+            this._handleAuthError(error, res);
+        }
+    }
+
     _handleAuthError(error, res) {
         console.error('خطأ في المصادقة:', error);
 
@@ -108,11 +154,13 @@ class AuthController {
             'auth/user-not-found': { status: 404, message: 'المستخدم غير موجود' },
             'auth/wrong-password': { status: 401, message: 'كلمة المرور غير صحيحة' },
             'auth/invalid-email': { status: 400, message: 'البريد الإلكتروني غير صالح' },
-            'auth/weak-password': { status: 400, message: 'كلمة المرور ضعيفة جداً' }
+            'auth/weak-password': { status: 400, message: 'كلمة المرور ضعيفة جداً' },
+            'auth/expired-action-code': { status: 400, message: 'انتهت صلاحية رمز إعادة تعيين كلمة المرور' },
+            'auth/invalid-action-code': { status: 400, message: 'رمز إعادة تعيين كلمة المرور غير صالح' }
         };
 
-        const errorDetails = errorMapping[error.code] || { 
-            status: 500, 
+        const errorDetails = errorMapping[error.code] || {
+            status: 500,
             message: error.message || 'حدث خطأ في عملية المصادقة'
         };
 

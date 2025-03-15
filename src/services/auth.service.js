@@ -6,10 +6,57 @@ import {
     createUserWithEmailAndPassword,
     updateProfile,
     GoogleAuthProvider,
-    signInWithCredential
+    signInWithCredential,
+    sendPasswordResetEmail as sendPasswordReset,
+    verifyPasswordResetCode,
+    confirmPasswordReset
 } from 'firebase/auth';
 
 class AuthService {
+    /**
+     * إرسال رابط إعادة تعيين كلمة المرور
+     */
+    async forgotPassword(email) {
+        try {
+            await sendPasswordReset(auth, email);
+            return true;
+        } catch (error) {
+            throw this._handleFirebaseError(error);
+        }
+    }
+
+    /**
+     * إعادة تعيين كلمة المرور باستخدام الرمز
+     */
+    async resetPassword(token, newPassword) {
+        try {
+            // التحقق من صحة الرمز أولاً
+            await verifyPasswordResetCode(auth, token);
+            // إعادة تعيين كلمة المرور
+            await confirmPasswordReset(auth, token, newPassword);
+            return true;
+        } catch (error) {
+            throw this._handleFirebaseError(error);
+        }
+    }
+
+    /**
+     * معالجة أخطاء Firebase
+     */
+    _handleFirebaseError(error) {
+        const errorMessages = {
+            'auth/user-not-found': 'البريد الإلكتروني غير مسجل',
+            'auth/invalid-action-code': 'رمز إعادة تعيين كلمة المرور غير صالح أو منتهي الصلاحية',
+            'auth/weak-password': 'كلمة المرور الجديدة ضعيفة جداً',
+            'auth/expired-action-code': 'انتهت صلاحية رمز إعادة تعيين كلمة المرور'
+        };
+
+        const message = errorMessages[error.code] || error.message;
+        const customError = new Error(message);
+        customError.code = error.code;
+        return customError;
+    }
+
     /**
      * إنشاء JWT token للمستخدم
      */

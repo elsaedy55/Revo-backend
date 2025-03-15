@@ -103,3 +103,63 @@ export const validateGoogleLoginData = (req, res, next) => {
 
     next();
 };
+
+/**
+ * التحقق من صحة بيانات طلب إعادة تعيين كلمة المرور
+ * @param {Request} req - كائن الطلب
+ * @param {Response} res - كائن الاستجابة
+ * @param {Function} next - الدالة التالية في سلسلة الوسائط
+ */
+export const validateForgotPasswordData = (req, res, next) => {
+    const { email } = req.body;
+
+    // التحقق من وجود البريد الإلكتروني
+    if (!email) {
+        return res.status(400).json({
+            message: 'البريد الإلكتروني مطلوب'
+        });
+    }
+
+    // التحقق من صحة تنسيق البريد الإلكتروني
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({
+            message: 'تنسيق البريد الإلكتروني غير صحيح'
+        });
+    }
+
+    next();
+};
+
+/**
+ * التحقق من صحة بيانات إعادة تعيين كلمة المرور
+ * @param {Request} req - كائن الطلب
+ * @param {Response} res - كائن الاستجابة
+ * @param {Function} next - الدالة التالية في سلسلة الوسائط
+ */
+export const validateResetPasswordData = (req, res, next) => {
+    const { token, newPassword } = req.body;
+
+    // التحقق من وجود الرمز
+    if (!token) {
+        return res.status(400).json({
+            message: 'رمز إعادة التعيين مطلوب'
+        });
+    }
+
+    // التحقق من كلمة المرور الجديدة
+    if (!newPassword) {
+        return res.status(400).json({
+            message: 'كلمة المرور الجديدة مطلوبة'
+        });
+    }
+
+    // التحقق من طول كلمة المرور
+    if (newPassword.length < 6) {
+        return res.status(400).json({
+            message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'
+        });
+    }
+
+    next();
+};
