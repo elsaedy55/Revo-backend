@@ -1,5 +1,5 @@
-const jwt = require('jsonwebtoken');
-const authConfig = require('../config/auth.config.js');
+import jwt from 'jsonwebtoken';
+import { authConfig } from '../config/auth.config.js';
 
 const AUTH_SCHEME = 'Bearer';
 
@@ -41,7 +41,7 @@ function extractAndVerifyToken(authHeader) {
     }
 }
 
-function verifyToken(req, res, next) {
+export function verifyToken(req, res, next) {
     try {
         const userId = extractAndVerifyToken(req.headers.authorization);
         req.userId = userId;
@@ -54,7 +54,3 @@ function verifyToken(req, res, next) {
         return res.status(error.status).json(response);
     }
 }
-
-module.exports = {
-    verifyToken
-};

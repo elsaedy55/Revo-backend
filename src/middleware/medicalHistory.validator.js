@@ -1,6 +1,6 @@
-const { body } = require('express-validator');
+import { body } from 'express-validator';
 
-const VALIDATION_LIMITS = {
+export const VALIDATION_LIMITS = {
     CONDITION_NAME: {
         MIN: 2,
         MAX: 255
@@ -11,7 +11,7 @@ const VALIDATION_LIMITS = {
     }
 };
 
-const ERROR_MESSAGES = {
+export const ERROR_MESSAGES = {
     REQUIRED: 'حقل مطلوب',
     LENGTH: (min, max) => `يجب أن يكون الطول بين ${min} و ${max} حرف`,
     MAX_LENGTH: (max) => `يجب أن لا يتجاوز الطول ${max} حرف`,
@@ -39,8 +39,7 @@ const validateFutureDate = (value) => {
     return true;
 };
 
-const validateMedicalHistory = [
-    // Required Fields
+export const validateMedicalHistory = [
     body('condition_name')
         .notEmpty()
         .withMessage(ERROR_MESSAGES.REQUIRED)
@@ -51,26 +50,16 @@ const validateMedicalHistory = [
             VALIDATION_LIMITS.CONDITION_NAME.MAX
         )),
 
-    // Date Fields
     body('diagnosis_date')
         .optional()
         .isISO8601()
         .withMessage(ERROR_MESSAGES.INVALID_DATE)
         .custom(validateFutureDate),
 
-    // Long Text Fields (1000 chars)
     createTextValidator('treatment_description', VALIDATION_LIMITS.TEXT_FIELD.LONG),
     createTextValidator('medications', VALIDATION_LIMITS.TEXT_FIELD.LONG),
     createTextValidator('surgery_history', VALIDATION_LIMITS.TEXT_FIELD.LONG),
     createTextValidator('notes', VALIDATION_LIMITS.TEXT_FIELD.LONG),
-
-    // Medium Text Fields (500 chars)
     createTextValidator('allergies', VALIDATION_LIMITS.TEXT_FIELD.MEDIUM),
     createTextValidator('chronic_diseases', VALIDATION_LIMITS.TEXT_FIELD.MEDIUM)
 ];
-
-module.exports = {
-    validateMedicalHistory,
-    VALIDATION_LIMITS,
-    ERROR_MESSAGES
-};

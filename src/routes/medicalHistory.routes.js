@@ -1,7 +1,7 @@
-const express = require('express');
-const { verifyToken } = require('../middleware/authJwt.js');
-const { validateMedicalHistory } = require('../middleware/medicalHistory.validator.js');
-const medicalHistoryController = require('../controllers/medicalHistory.controller.js');
+import express from 'express';
+import { verifyToken } from '../middleware/authJwt.js';
+import { validateMedicalHistory } from '../middleware/medicalHistory.validator.js';
+import * as medicalHistoryController from '../controllers/medicalHistory.controller.js';
 
 const router = express.Router();
 
@@ -70,4 +70,4 @@ router.put(
     medicalHistoryController.updateMedicalHistory
 );
 
-module.exports = router;
+export default router;
