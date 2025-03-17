@@ -22,6 +22,7 @@ app.use(cors({
 
 // إعداد الوسائط
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // تهيئة Passport
 app.use(passport.initialize());
@@ -29,6 +30,14 @@ app.use(passport.initialize());
 // تكوين المسارات
 app.use('/api/auth', authRoutes);
 app.use('/api/medical-history', medicalHistoryRoutes);
+
+// مسار الصفحة الرئيسية
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'مرحباً بك في نظام السجلات الطبية',
+    version: '1.0.0'
+  });
+});
 
 // معالجة المسارات غير الموجودة
 app.use((req, res) => {

@@ -7,7 +7,7 @@ export const authConfig = {
         expirationTime: process.env.JWT_EXPIRATION || '24h'
     },
     server: {
-        url: process.env.SERVER_URL || 'http://localhost:3000'
+        url: process.env.SERVER_URL || 'https://revo-backend-6ick.onrender.com'
     },
     google: {
         clientId: process.env.GOOGLE_CLIENT_ID,

@@ -1,65 +1,117 @@
-import { body } from 'express-validator';
+const { body, param } = require('express-validator');
+const { validate } = require('./validation.middleware');
 
-export const VALIDATION_LIMITS = {
-    CONDITION_NAME: {
-        MIN: 2,
-        MAX: 255
-    },
-    TEXT_FIELD: {
-        LONG: 1000,
-        MEDIUM: 500
+/**
+ * رسائل الخطأ المستخدمة في التحقق من صحة البيانات
+ */
+const ERROR_MESSAGES = {
+    REQUIRED: (field) => `حقل ${field} مطلوب`,
+    INVALID_PHONE: 'رقم الهاتف غير صالح',
+    INVALID_DATE: 'التاريخ غير صالح',
+    INVALID_BOOLEAN: 'يجب أن تكون القيمة صحيحة أو خاطئة',
+    INVALID_ARRAY: 'يجب أن تكون قائمة صحيحة',
+    ARRAY_LENGTH_MISMATCH: 'عدد التواريخ يجب أن يتطابق مع عدد العناصر',
+    INVALID_ID: 'معرف السجل الطبي غير صالح'
+};
+
+/**
+ * التحقق من تطابق طول المصفوفتين
+ */
+const validateArraysLength = (array1, array2) => {
+    if (!Array.isArray(array1) || !Array.isArray(array2)) {
+        return false;
     }
+    return array1.length === array2.length;
 };
 
-export const ERROR_MESSAGES = {
-    REQUIRED: 'حقل مطلوب',
-    LENGTH: (min, max) => `يجب أن يكون الطول بين ${min} و ${max} حرف`,
-    MAX_LENGTH: (max) => `يجب أن لا يتجاوز الطول ${max} حرف`,
-    INVALID_DATE: 'يجب أن يكون التاريخ صحيحاً',
-    FUTURE_DATE: 'لا يمكن أن يكون التاريخ في المستقبل'
-};
+/**
+ * التحقق من صحة بيانات السجل الطبي
+ */
+const validateMedicalRecord = [
+    // التحقق من رقم الهاتف
+    body('phone_number')
+        .notEmpty().withMessage(ERROR_MESSAGES.REQUIRED('رقم الهاتف'))
+        .matches(/^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,6}$/)
+        .withMessage(ERROR_MESSAGES.INVALID_PHONE),
+    
+    // التحقق من تاريخ الميلاد
+    body('date_of_birth')
+        .notEmpty().withMessage(ERROR_MESSAGES.REQUIRED('تاريخ الميلاد'))
+        .isDate().withMessage(ERROR_MESSAGES.INVALID_DATE),
+    
+    // التحقق من العنوان
+    body('address')
+        .notEmpty().withMessage(ERROR_MESSAGES.REQUIRED('العنوان'))
+        .trim(),
+    
+    // التحقق من وجود أمراض
+    body('has_diseases')
+        .isBoolean().withMessage(ERROR_MESSAGES.INVALID_BOOLEAN),
+    
+    // التحقق من قائمة الأمراض وتواريخها
+    body('diseases')
+        .if(body('has_diseases').equals('true'))
+        .isArray().withMessage(ERROR_MESSAGES.INVALID_ARRAY),
+    
+    body('disease_start_dates')
+        .if(body('has_diseases').equals('true'))
+        .isArray().withMessage(ERROR_MESSAGES.INVALID_ARRAY)
+        .custom((value, { req }) => {
+            if (!validateArraysLength(req.body.diseases, value)) {
+                throw new Error(ERROR_MESSAGES.ARRAY_LENGTH_MISMATCH);
+            }
+            return true;
+        }),
+    
+    // التحقق من الأدوية
+    body('takes_medications')
+        .isBoolean().withMessage(ERROR_MESSAGES.INVALID_BOOLEAN),
+    
+    body('medications')
+        .if(body('takes_medications').equals('true'))
+        .isArray().withMessage(ERROR_MESSAGES.INVALID_ARRAY),
+    
+    body('medication_start_dates')
+        .if(body('takes_medications').equals('true'))
+        .isArray().withMessage(ERROR_MESSAGES.INVALID_ARRAY)
+        .custom((value, { req }) => {
+            if (!validateArraysLength(req.body.medications, value)) {
+                throw new Error(ERROR_MESSAGES.ARRAY_LENGTH_MISMATCH);
+            }
+            return true;
+        }),
+    
+    // التحقق من العمليات الجراحية
+    body('had_surgeries')
+        .isBoolean().withMessage(ERROR_MESSAGES.INVALID_BOOLEAN),
+    
+    body('surgeries')
+        .if(body('had_surgeries').equals('true'))
+        .isArray().withMessage(ERROR_MESSAGES.INVALID_ARRAY),
+    
+    body('surgery_dates')
+        .if(body('had_surgeries').equals('true'))
+        .isArray().withMessage(ERROR_MESSAGES.INVALID_ARRAY)
+        .custom((value, { req }) => {
+            if (!validateArraysLength(req.body.surgeries, value)) {
+                throw new Error(ERROR_MESSAGES.ARRAY_LENGTH_MISMATCH);
+            }
+            return true;
+        }),
 
-const createTextValidator = (fieldName, maxLength, isRequired = false) => {
-    const chain = body(fieldName)
-        .trim()
-        .isLength({ max: maxLength })
-        .withMessage(ERROR_MESSAGES.MAX_LENGTH(maxLength));
-
-    return isRequired ? 
-        chain.notEmpty().withMessage(ERROR_MESSAGES.REQUIRED) : 
-        chain.optional();
-};
-
-const validateFutureDate = (value) => {
-    const date = new Date(value);
-    const now = new Date();
-    if (date > now) {
-        throw new Error(ERROR_MESSAGES.FUTURE_DATE);
-    }
-    return true;
-};
-
-export const validateMedicalHistory = [
-    body('condition_name')
-        .notEmpty()
-        .withMessage(ERROR_MESSAGES.REQUIRED)
-        .trim()
-        .isLength(VALIDATION_LIMITS.CONDITION_NAME)
-        .withMessage(ERROR_MESSAGES.LENGTH(
-            VALIDATION_LIMITS.CONDITION_NAME.MIN,
-            VALIDATION_LIMITS.CONDITION_NAME.MAX
-        )),
-
-    body('diagnosis_date')
-        .optional()
-        .isISO8601()
-        .withMessage(ERROR_MESSAGES.INVALID_DATE)
-        .custom(validateFutureDate),
-
-    createTextValidator('treatment_description', VALIDATION_LIMITS.TEXT_FIELD.LONG),
-    createTextValidator('medications', VALIDATION_LIMITS.TEXT_FIELD.LONG),
-    createTextValidator('surgery_history', VALIDATION_LIMITS.TEXT_FIELD.LONG),
-    createTextValidator('notes', VALIDATION_LIMITS.TEXT_FIELD.LONG),
-    createTextValidator('allergies', VALIDATION_LIMITS.TEXT_FIELD.MEDIUM),
-    createTextValidator('chronic_diseases', VALIDATION_LIMITS.TEXT_FIELD.MEDIUM)
+    // تطبيق التحقق
+    validate
 ];
+
+/**
+ * التحقق من صحة معرف السجل الطبي
+ */
+const validateId = [
+    param('id').isUUID().withMessage(ERROR_MESSAGES.INVALID_ID),
+    validate
+];
+
+module.exports = {
+    validateMedicalRecord,
+    validateId
+};

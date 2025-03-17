@@ -1,107 +1,139 @@
-import { validationResult } from 'express-validator';
-import MedicalHistory from '../models/medicalHistory.model.js';
+const MedicalHistory = require('../models/medicalHistory.model');
 
-// إنشاء سجل طبي جديد
-export const createMedicalHistory = async (req, res) => {
-    try {
-        // التحقق من صحة البيانات المدخلة
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ 
-                نجاح: false, 
-                أخطاء: errors.array().map(err => ({ 
-                    حقل: err.param, 
-                    رسالة: err.msg 
-                }))
+/**
+ * وحدة التحكم في السجلات الطبية
+ * تحتوي على جميع المنطق الخاص بمعالجة طلبات السجلات الطبية
+ */
+class MedicalHistoryController {
+    /**
+     * إنشاء سجل طبي جديد
+     */
+    async create(req, res) {
+        try {
+            // التحقق من وجود البيانات المطلوبة
+            const requiredFields = ['phone_number', 'date_of_birth', 'address'];
+            for (const field of requiredFields) {
+                if (!req.body[field]) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `حقل ${field} مطلوب`
+                    });
+                }
+            }
+
+            const medicalRecord = await MedicalHistory.create(req.body);
+            
+            res.status(201).json({
+                success: true,
+                message: 'تم إنشاء السجل الطبي بنجاح',
+                data: medicalRecord
+            });
+        } catch (error) {
+            console.error('خطأ في إنشاء السجل الطبي:', error);
+            res.status(500).json({
+                success: false,
+                message: 'حدث خطأ أثناء إنشاء السجل الطبي',
+                error: error.message
             });
         }
-
-        // إنشاء كائن جديد من التاريخ الطبي
-        console.log('Creating medical history for user:', req.userId);
-        const medicalHistoryData = {
-            user_id: req.userId,
-            ...req.body
-        };
-
-        const medicalHistory = new MedicalHistory(medicalHistoryData);
-        const newRecord = await medicalHistory.create();
-
-        res.status(201).json({
-            نجاح: true,
-            رسالة: 'تم حفظ السجل الطبي بنجاح',
-            بيانات: newRecord
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            نجاح: false,
-            رسالة: 'حدث خطأ أثناء حفظ السجل الطبي',
-            خطأ: error.message
-        });
     }
-};
 
-// عرض السجل الطبي للمستخدم
-export const getUserMedicalHistory = async (req, res) => {
-    try {
-        console.log('Getting medical history for user:', req.userId);
-        const records = await MedicalHistory.findByUserId(req.userId);
-        
-        res.json({
-            نجاح: true,
-            بيانات: records
-        });
+    /**
+     * جلب سجل طبي بواسطة المعرف
+     */
+    async getById(req, res) {
+        try {
+            const medicalRecord = await MedicalHistory.findById(req.params.id);
+            
+            if (!medicalRecord) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'لم يتم العثور على السجل الطبي'
+                });
+            }
 
-    } catch (error) {
-        res.status(500).json({
-            نجاح: false,
-            رسالة: 'حدث خطأ أثناء جلب السجل الطبي',
-            خطأ: error.message
-        });
-    }
-};
-
-// تحديث السجل الطبي
-export const updateMedicalHistory = async (req, res) => {
-    try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ 
-                نجاح: false, 
-                أخطاء: errors.array().map(err => ({ 
-                    حقل: err.param, 
-                    رسالة: err.msg 
-                }))
+            res.json({
+                success: true,
+                data: medicalRecord
+            });
+        } catch (error) {
+            console.error('خطأ في جلب السجل الطبي:', error);
+            res.status(500).json({
+                success: false,
+                message: 'حدث خطأ أثناء استرجاع السجل الطبي',
+                error: error.message
             });
         }
+    }
 
-        console.log('Updating medical history for user:', req.userId);
-        const medicalHistoryData = {
-            user_id: req.userId,
-            ...req.body
-        };
+    /**
+     * تحديث سجل طبي
+     */
+    async update(req, res) {
+        try {
+            // التحقق من وجود البيانات المطلوبة
+            const requiredFields = ['phone_number', 'date_of_birth', 'address'];
+            for (const field of requiredFields) {
+                if (!req.body[field]) {
+                    return res.status(400).json({
+                        success: false,
+                        message: `حقل ${field} مطلوب`
+                    });
+                }
+            }
 
-        const medicalHistory = new MedicalHistory(medicalHistoryData);
-        const updatedRecord = await medicalHistory.update(req.params.id);
+            const medicalRecord = await MedicalHistory.update(req.params.id, req.body);
+            
+            if (!medicalRecord) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'لم يتم العثور على السجل الطبي'
+                });
+            }
 
-        if (!updatedRecord) {
-            return res.status(404).json({
-                نجاح: false,
-                رسالة: 'لم يتم العثور على السجل الطبي'
+            res.json({
+                success: true,
+                message: 'تم تحديث السجل الطبي بنجاح',
+                data: medicalRecord
+            });
+        } catch (error) {
+            console.error('خطأ في تحديث السجل الطبي:', error);
+            res.status(500).json({
+                success: false,
+                message: 'حدث خطأ أثناء تحديث السجل الطبي',
+                error: error.message
             });
         }
-
-        res.json({
-            نجاح: true,
-            رسالة: 'تم تحديث السجل الطبي بنجاح',
-            بيانات: updatedRecord
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            نجاح: false,
-            رسالة: 'حدث خطأ أثناء تحديث السجل الطبي',
-            خطأ: error.message
-        });
     }
-};
+
+    /**
+     * حذف سجل طبي
+     */
+    async delete(req, res) {
+        try {
+            const medicalRecord = await MedicalHistory.delete(req.params.id);
+            
+            if (!medicalRecord) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'لم يتم العثور على السجل الطبي'
+                });
+            }
+
+            res.json({
+                success: true,
+                message: 'تم حذف السجل الطبي بنجاح',
+                data: medicalRecord
+            });
+        } catch (error) {
+            console.error('خطأ في حذف السجل الطبي:', error);
+            res.status(500).json({
+                success: false,
+                message: 'حدث خطأ أثناء حذف السجل الطبي',
+                error: error.message
+            });
+        }
+    }
+}
+
+module.exports = new MedicalHistoryController();

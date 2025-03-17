@@ -1,93 +1,136 @@
-import { pool } from '../config/database.js';
+const db = require('../config/database');
 
+/**
+ * نموذج السجل الطبي
+ * يحتوي على جميع العمليات المتعلقة بالسجلات الطبية في قاعدة البيانات
+ */
 class MedicalHistory {
-    constructor(data) {
-        this.user_id = data.user_id;
-        this.condition_name = data.condition_name;
-        this.diagnosis_date = data.diagnosis_date;
-        this.treatment_description = data.treatment_description;
-        this.medications = data.medications;
-        this.surgery_history = data.surgery_history;
-        this.allergies = data.allergies;
-        this.chronic_diseases = data.chronic_diseases;
-        this.notes = data.notes;
-    }
-
-    async create() {
+    /**
+     * إنشاء سجل طبي جديد
+     * @param {Object} medicalRecord - بيانات السجل الطبي
+     * @returns {Promise<Object>} السجل الطبي المنشأ
+     */
+    static async create(medicalRecord) {
         const query = `
-            INSERT INTO medical_history 
-            (user_id, condition_name, diagnosis_date, treatment_description, 
-             medications, surgery_history, allergies, chronic_diseases, notes)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO medical_history (
+                phone_number, 
+                date_of_birth, 
+                address,
+                has_diseases, 
+                diseases, 
+                disease_start_dates,
+                takes_medications, 
+                medications, 
+                medication_start_dates,
+                had_surgeries, 
+                surgeries, 
+                surgery_dates
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING *
         `;
-        
+
         const values = [
-            this.user_id,
-            this.condition_name,
-            this.diagnosis_date,
-            this.treatment_description,
-            this.medications,
-            this.surgery_history,
-            this.allergies,
-            this.chronic_diseases,
-            this.notes
+            medicalRecord.phone_number,
+            medicalRecord.date_of_birth,
+            medicalRecord.address,
+            medicalRecord.has_diseases,
+            JSON.stringify(medicalRecord.diseases || []),
+            JSON.stringify(medicalRecord.disease_start_dates || []),
+            medicalRecord.takes_medications,
+            JSON.stringify(medicalRecord.medications || []),
+            JSON.stringify(medicalRecord.medication_start_dates || []),
+            medicalRecord.had_surgeries,
+            JSON.stringify(medicalRecord.surgeries || []),
+            JSON.stringify(medicalRecord.surgery_dates || [])
         ];
 
         try {
-            const result = await pool.query(query, values);
+            const result = await db.query(query, values);
             return result.rows[0];
         } catch (error) {
             throw new Error(`خطأ في إنشاء السجل الطبي: ${error.message}`);
         }
     }
 
-    static async findByUserId(userId) {
-        const query = 'SELECT * FROM medical_history WHERE user_id = $1';
+    /**
+     * البحث عن سجل طبي بواسطة المعرف
+     * @param {string} id - معرف السجل الطبي
+     * @returns {Promise<Object>} السجل الطبي
+     */
+    static async findById(id) {
         try {
-            const result = await pool.query(query, [userId]);
-            return result.rows;
+            const query = 'SELECT * FROM medical_history WHERE id = $1';
+            const result = await db.query(query, [id]);
+            return result.rows[0];
         } catch (error) {
-            throw new Error(`خطأ في جلب السجل الطبي: ${error.message}`);
+            throw new Error(`خطأ في البحث عن السجل الطبي: ${error.message}`);
         }
     }
 
-    async update(id) {
+    /**
+     * تحديث سجل طبي
+     * @param {string} id - معرف السجل الطبي
+     * @param {Object} medicalRecord - البيانات المحدثة
+     * @returns {Promise<Object>} السجل الطبي المحدث
+     */
+    static async update(id, medicalRecord) {
         const query = `
-            UPDATE medical_history
-            SET condition_name = $1,
-                diagnosis_date = $2,
-                treatment_description = $3,
-                medications = $4,
-                surgery_history = $5,
-                allergies = $6,
-                chronic_diseases = $7,
-                notes = $8,
+            UPDATE medical_history SET
+                phone_number = $1,
+                date_of_birth = $2,
+                address = $3,
+                has_diseases = $4,
+                diseases = $5,
+                disease_start_dates = $6,
+                takes_medications = $7,
+                medications = $8,
+                medication_start_dates = $9,
+                had_surgeries = $10,
+                surgeries = $11,
+                surgery_dates = $12,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $9 AND user_id = $10
+            WHERE id = $13
             RETURNING *
         `;
 
         const values = [
-            this.condition_name,
-            this.diagnosis_date,
-            this.treatment_description,
-            this.medications,
-            this.surgery_history,
-            this.allergies,
-            this.chronic_diseases,
-            this.notes,
-            id,
-            this.user_id
+            medicalRecord.phone_number,
+            medicalRecord.date_of_birth,
+            medicalRecord.address,
+            medicalRecord.has_diseases,
+            JSON.stringify(medicalRecord.diseases || []),
+            JSON.stringify(medicalRecord.disease_start_dates || []),
+            medicalRecord.takes_medications,
+            JSON.stringify(medicalRecord.medications || []),
+            JSON.stringify(medicalRecord.medication_start_dates || []),
+            medicalRecord.had_surgeries,
+            JSON.stringify(medicalRecord.surgeries || []),
+            JSON.stringify(medicalRecord.surgery_dates || []),
+            id
         ];
 
         try {
-            const result = await pool.query(query, values);
+            const result = await db.query(query, values);
             return result.rows[0];
         } catch (error) {
             throw new Error(`خطأ في تحديث السجل الطبي: ${error.message}`);
         }
     }
+
+    /**
+     * حذف سجل طبي
+     * @param {string} id - معرف السجل الطبي
+     * @returns {Promise<Object>} السجل الطبي المحذوف
+     */
+    static async delete(id) {
+        try {
+            const query = 'DELETE FROM medical_history WHERE id = $1 RETURNING *';
+            const result = await db.query(query, [id]);
+            return result.rows[0];
+        } catch (error) {
+            throw new Error(`خطأ في حذف السجل الطبي: ${error.message}`);
+        }
+    }
 }
 
-export default MedicalHistory;
+module.exports = MedicalHistory;

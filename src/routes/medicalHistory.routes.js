@@ -1,6 +1,6 @@
 import express from 'express';
 import { verifyToken } from '../middleware/authJwt.js';
-import { validateMedicalHistory } from '../middleware/medicalHistory.validator.js';
+import { validateMedicalHistory, validateId } from '../middleware/medicalHistory.validator.js';
 import * as medicalHistoryController from '../controllers/medicalHistory.controller.js';
 
 const router = express.Router();
@@ -53,6 +53,22 @@ router.get(
 );
 
 /**
+ * @route GET /api/medical-history/:id
+ * @description الحصول على سجل طبي محدد للمستخدم المصادق عليه
+ * @access خاص - يتطلب توكن المصادقة
+ * @params
+ *   - id: معرف السجل الطبي المراد الحصول عليه
+ * @middleware
+ *   - verifyToken: التحقق من تسجيل دخول المستخدم
+ *   - validateId: التحقق من صحة معرف السجل الطبي
+ */
+router.get(
+    ROUTES.BY_ID,
+    [verifyToken, validateId],
+    medicalHistoryController.getById
+);
+
+/**
  * @route PUT /api/medical-history/:id
  * @description تحديث سجل طبي محدد للمستخدم المصادق عليه
  * @access خاص - يتطلب توكن المصادقة
@@ -66,8 +82,24 @@ router.get(
  */
 router.put(
     ROUTES.BY_ID,
-    [verifyToken, validateMedicalHistory],
+    [verifyToken, validateId, validateMedicalHistory],
     medicalHistoryController.updateMedicalHistory
+);
+
+/**
+ * @route DELETE /api/medical-history/:id
+ * @description حذف سجل طبي محدد للمستخدم المصادق عليه
+ * @access خاص - يتطلب توكن المصادقة
+ * @params
+ *   - id: معرف السجل الطبي المراد حذفه
+ * @middleware
+ *   - verifyToken: التحقق من تسجيل دخول المستخدم
+ *   - validateId: التحقق من صحة معرف السجل الطبي
+ */
+router.delete(
+    ROUTES.BY_ID,
+    [verifyToken, validateId],
+    medicalHistoryController.deleteMedicalHistory
 );
 
 export default router;
