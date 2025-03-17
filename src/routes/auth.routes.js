@@ -58,8 +58,15 @@ passport.use(new GoogleStrategy({
 router.post('/register', validateRegisterData, authController.register.bind(authController));
 router.post('/login', validateLoginData, authController.login.bind(authController));
 router.post('/google/token', validateGoogleLoginData, authController.googleLogin.bind(authController));
-router.post('/forgot-password', validateForgotPasswordData, authController.forgotPassword.bind(authController));
-router.post('/reset-password', validateResetPasswordData, authController.resetPassword.bind(authController));
+
+// مسارات إعادة تعيين كلمة المرور
+router.post('/forgot-password', validateForgotPasswordData, (req, res) => {
+    authController.forgotPassword(req, res);
+});
+
+router.post('/reset-password', validateResetPasswordData, (req, res) => {
+    authController.resetPassword(req, res);
+});
 
 // مسارات مصادقة Google
 router.get('/google', passport.authenticate('google', {

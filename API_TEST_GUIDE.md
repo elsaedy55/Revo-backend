@@ -8,7 +8,7 @@
 
 ### 1. تسجيل مستخدم جديد
 - **الطريقة**: `POST`
-- **المسار**: `/api/auth/signup`
+- **المسار**: `/api/auth/register`
 - **الرؤوس**: 
   - `Content-Type: application/json`
 - **نموذج البيانات**:
@@ -57,11 +57,41 @@
 }
 ```
 
+### 3. تسجيل الدخول باستخدام Google
+- **الطريقة**: `GET`
+- **المسار**: `/api/auth/google`
+- **ملاحظة**: سيقوم بتحويل المستخدم إلى صفحة تسجيل الدخول بـ Google
+
+### 4. إعادة تعيين كلمة المرور
+- **الطريقة**: `POST`
+- **المسار**: `/api/auth/forgot-password`
+- **الرؤوس**: 
+  - `Content-Type: application/json`
+- **نموذج البيانات**:
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+### 5. تأكيد إعادة تعيين كلمة المرور
+- **الطريقة**: `POST`
+- **المسار**: `/api/auth/reset-password`
+- **الرؤوس**: 
+  - `Content-Type: application/json`
+- **نموذج البيانات**:
+```json
+{
+  "token": "reset_token",
+  "newPassword": "new_password123"
+}
+```
+
 ## السجلات الطبية (Medical Records)
 
 ### 1. إنشاء سجل طبي جديد
 - **الطريقة**: `POST`
-- **المسار**: `/api/medical-records`
+- **المسار**: `/api/medical-history`
 - **الرؤوس**: 
   - `Content-Type: application/json`
   - `Authorization: Bearer {token}`
@@ -97,7 +127,7 @@
 
 ### 2. جلب سجل طبي معين
 - **الطريقة**: `GET`
-- **المسار**: `/api/medical-records/:id`
+- **المسار**: `/api/medical-history/:id`
 - **الرؤوس**: 
   - `Authorization: Bearer {token}`
 - **مثال للاستجابة الناجحة**:
@@ -114,7 +144,7 @@
 
 ### 3. تحديث سجل طبي
 - **الطريقة**: `PUT`
-- **المسار**: `/api/medical-records/:id`
+- **المسار**: `/api/medical-history/:id`
 - **الرؤوس**: 
   - `Content-Type: application/json`
   - `Authorization: Bearer {token}`
@@ -134,7 +164,7 @@
 
 ### 4. حذف سجل طبي
 - **الطريقة**: `DELETE`
-- **المسار**: `/api/medical-records/:id`
+- **المسار**: `/api/medical-history/:id`
 - **الرؤوس**: 
   - `Authorization: Bearer {token}`
 - **مثال للاستجابة الناجحة**:
@@ -155,7 +185,7 @@
 
 2. **خطوات الاختبار**:
    1. قم بتشغيل الخادم المحلي
-   2. اختبر تسجيل مستخدم جديد باستخدام نقطة النهاية `signup`
+   2. اختبر تسجيل مستخدم جديد باستخدام نقطة النهاية `register`
    3. قم بتسجيل الدخول واحصل على التوكن
    4. انسخ التوكن من الاستجابة وضعه في متغير البيئة `token`
    5. اختبر إنشاء سجل طبي جديد
