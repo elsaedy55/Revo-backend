@@ -1,5 +1,5 @@
-const { body, param } = require('express-validator');
-const { validate } = require('./validation.middleware');
+import { body, param } from 'express-validator';
+import { validate } from './validation.middleware.js';
 
 /**
  * رسائل الخطأ المستخدمة في التحقق من صحة البيانات
@@ -27,7 +27,7 @@ const validateArraysLength = (array1, array2) => {
 /**
  * التحقق من صحة بيانات السجل الطبي
  */
-const validateMedicalRecord = [
+export const validateMedicalHistory = [
     // التحقق من رقم الهاتف
     body('phone_number')
         .notEmpty().withMessage(ERROR_MESSAGES.REQUIRED('رقم الهاتف'))
@@ -106,12 +106,7 @@ const validateMedicalRecord = [
 /**
  * التحقق من صحة معرف السجل الطبي
  */
-const validateId = [
+export const validateId = [
     param('id').isUUID().withMessage(ERROR_MESSAGES.INVALID_ID),
     validate
 ];
-
-module.exports = {
-    validateMedicalRecord,
-    validateId
-};

@@ -1,4 +1,4 @@
-const db = require('../config/database');
+import db from '../config/database.js';
 
 /**
  * نموذج السجل الطبي
@@ -133,4 +133,4 @@ class MedicalHistory {
     }
 }
 
-module.exports = MedicalHistory;
+export default MedicalHistory;

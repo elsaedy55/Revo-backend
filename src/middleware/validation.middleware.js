@@ -1,8 +1,21 @@
+import { validationResult } from 'express-validator';
+
+/**
+ * وسيط للتحقق من صحة البيانات
+ */
+export const validate = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({
+            success: false,
+            errors: errors.array()
+        });
+    }
+    next();
+};
+
 /**
  * التحقق من صحة بيانات تسجيل المستخدم
- * @param {Request} req - كائن الطلب
- * @param {Response} res - كائن الاستجابة
- * @param {Function} next - الدالة التالية في سلسلة الوسائط
  */
 export const validateRegisterData = (req, res, next) => {
     const { email, password, name } = req.body;
@@ -54,9 +67,6 @@ export const validateRegisterData = (req, res, next) => {
 
 /**
  * التحقق من صحة بيانات تسجيل الدخول
- * @param {Request} req - كائن الطلب
- * @param {Response} res - كائن الاستجابة
- * @param {Function} next - الدالة التالية في سلسلة الوسائط
  */
 export const validateLoginData = (req, res, next) => {
     const { email, password } = req.body;
@@ -88,9 +98,6 @@ export const validateLoginData = (req, res, next) => {
 
 /**
  * التحقق من صحة بيانات تسجيل الدخول باستخدام Google
- * @param {Request} req - كائن الطلب
- * @param {Response} res - كائن الاستجابة
- * @param {Function} next - الدالة التالية في سلسلة الوسائط
  */
 export const validateGoogleLoginData = (req, res, next) => {
     const { idToken } = req.body;
@@ -106,9 +113,6 @@ export const validateGoogleLoginData = (req, res, next) => {
 
 /**
  * التحقق من صحة بيانات طلب إعادة تعيين كلمة المرور
- * @param {Request} req - كائن الطلب
- * @param {Response} res - كائن الاستجابة
- * @param {Function} next - الدالة التالية في سلسلة الوسائط
  */
 export const validateForgotPasswordData = (req, res, next) => {
     const { email } = req.body;
@@ -133,9 +137,6 @@ export const validateForgotPasswordData = (req, res, next) => {
 
 /**
  * التحقق من صحة بيانات إعادة تعيين كلمة المرور
- * @param {Request} req - كائن الطلب
- * @param {Response} res - كائن الاستجابة
- * @param {Function} next - الدالة التالية في سلسلة الوسائط
  */
 export const validateResetPasswordData = (req, res, next) => {
     const { token, newPassword } = req.body;

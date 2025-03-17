@@ -1,4 +1,4 @@
-const MedicalHistory = require('../models/medicalHistory.model');
+import MedicalHistory from '../models/medicalHistory.model.js';
 
 /**
  * وحدة التحكم في السجلات الطبية
@@ -136,4 +136,4 @@ class MedicalHistoryController {
     }
 }
 
-module.exports = new MedicalHistoryController();
+export default new MedicalHistoryController();
