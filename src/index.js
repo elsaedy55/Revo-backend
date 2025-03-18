@@ -12,7 +12,7 @@ dotenv.config();
 
 // تهيئة التطبيق
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
 // إعداد CORS
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [authConfig.server.url];

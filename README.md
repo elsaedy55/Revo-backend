@@ -109,7 +109,7 @@ npm install
 Create a `.env` file with the following variables:
 ```env
 # Server
-PORT=3000
+PORT=4000
 NODE_ENV=development
 
 # Database

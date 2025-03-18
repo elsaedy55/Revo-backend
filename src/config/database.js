@@ -9,15 +9,20 @@ dotenv.config();
  */
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: process.env.NODE_ENV === 'production' ? {
+        rejectUnauthorized: false,
+        require: true
+    } : false
 });
 
 // التحقق من الاتصال عند بدء التشغيل
 pool.connect((err, client, release) => {
     if (err) {
         console.error('خطأ في الاتصال بقاعدة البيانات:', err.stack);
+        console.log('محاولة الاتصال باستخدام:', {
+            connectionString: process.env.DATABASE_URL,
+            ssl: process.env.NODE_ENV === 'production'
+        });
     } else {
         console.log('تم الاتصال بقاعدة البيانات بنجاح');
         release();

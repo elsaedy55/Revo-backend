@@ -1,7 +1,7 @@
 # دليل اختبار واجهة برمجة التطبيقات (API)
 
 ## معلومات عامة
-- **عنوان الخادم المحلي**: `http://localhost:3000`
+- **عنوان الخادم المحلي**: `http://localhost:4000`
 - **رأس المصادقة**: `Authorization: Bearer {token}`
 
 ## المصادقة (Authentication)
@@ -180,7 +180,7 @@
 1. **إعداد البيئة في Postman**:
    - قم بإنشاء بيئة جديدة (Environment) باسم "Medical Records API"
    - أضف المتغيرات التالية:
-     - `baseUrl`: `http://localhost:3000`
+     - `baseUrl`: `http://localhost:4000`
      - `token`: (سيتم ملؤها تلقائياً بعد تسجيل الدخول)
 
 2. **خطوات الاختبار**:
