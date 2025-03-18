@@ -151,13 +151,38 @@ class AuthController {
         console.error('خطأ في المصادقة:', error);
 
         const errorMapping = {
-            'auth/email-already-in-use': { status: 400, message: 'البريد الإلكتروني مستخدم بالفعل' },
-            'auth/user-not-found': { status: 404, message: 'المستخدم غير موجود' },
-            'auth/wrong-password': { status: 401, message: 'كلمة المرور غير صحيحة' },
-            'auth/invalid-email': { status: 400, message: 'البريد الإلكتروني غير صالح' },
-            'auth/weak-password': { status: 400, message: 'كلمة المرور ضعيفة جداً' },
-            'auth/expired-action-code': { status: 400, message: 'انتهت صلاحية رمز إعادة تعيين كلمة المرور' },
-            'auth/invalid-action-code': { status: 400, message: 'رمز إعادة تعيين كلمة المرور غير صالح' }
+            'auth/invalid-login-credentials': { 
+                status: 401, 
+                message: 'البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى التحقق من بياناتك والمحاولة مرة أخرى.'
+            },
+            'auth/email-already-in-use': { 
+                status: 400, 
+                message: 'البريد الإلكتروني مستخدم بالفعل' 
+            },
+            'auth/user-not-found': { 
+                status: 404, 
+                message: 'البريد الإلكتروني غير مسجل في النظام' 
+            },
+            'auth/wrong-password': { 
+                status: 401, 
+                message: 'كلمة المرور غير صحيحة' 
+            },
+            'auth/invalid-email': { 
+                status: 400, 
+                message: 'البريد الإلكتروني غير صالح' 
+            },
+            'auth/weak-password': { 
+                status: 400, 
+                message: 'كلمة المرور ضعيفة جداً، يجب أن تكون 6 أحرف على الأقل' 
+            },
+            'auth/expired-action-code': { 
+                status: 400, 
+                message: 'انتهت صلاحية رمز إعادة تعيين كلمة المرور' 
+            },
+            'auth/invalid-action-code': { 
+                status: 400, 
+                message: 'رمز إعادة تعيين كلمة المرور غير صالح' 
+            }
         };
 
         const errorDetails = errorMapping[error.code] || {

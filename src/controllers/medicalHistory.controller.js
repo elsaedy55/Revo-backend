@@ -1,4 +1,6 @@
 import MedicalHistory from '../models/medicalHistory.model.js';
+import jwt from 'jsonwebtoken';
+import { authConfig } from '../config/auth.config.js';
 
 /**
  * وحدة التحكم في السجلات الطبية
@@ -10,6 +12,11 @@ class MedicalHistoryController {
      */
     async create(req, res) {
         try {
+            // استخراج اسم المستخدم من التوكن
+            const token = req.headers.authorization.split(' ')[1];
+            const decoded = jwt.verify(token, authConfig.jwt.secret);
+            const userName = decoded.name;
+
             // التحقق من وجود البيانات الإجبارية
             const requiredFields = [
                 'phone_number', 
@@ -51,10 +58,11 @@ class MedicalHistoryController {
                 });
             }
 
-            // إضافة معرف المستخدم من التوكن
+            // إضافة معرف المستخدم واسمه من التوكن
             const medicalRecordData = {
                 ...req.body,
-                user_id: req.userId
+                user_id: req.userId,
+                name: userName
             };
 
             const medicalRecord = await MedicalHistory.create(medicalRecordData);

@@ -13,6 +13,10 @@ class MedicalHistory {
     static formatRecord(record) {
         if (!record) return null;
 
+        if (!record.name) {
+            throw new Error('اسم المستخدم مطلوب');
+        }
+
         // تنسيق الأمراض مع تواريخها
         const diseases = record.diseases ? record.diseases.map((disease, index) => ({
             name: disease || null,
@@ -34,6 +38,7 @@ class MedicalHistory {
         return {
             id: record.id,
             user_id: record.user_id,
+            name: record.name, // لا نسمح بـ null
             phone_number: record.phone_number || null,
             date_of_birth: record.date_of_birth || null,
             address: record.address || null,
@@ -54,6 +59,10 @@ class MedicalHistory {
      * @returns {Object} البيانات بصيغة قاعدة البيانات
      */
     static prepareForDatabase(data) {
+        if (!data.name) {
+            throw new Error('اسم المستخدم مطلوب');
+        }
+
         const diseases = data.diseases?.map(d => d?.name || null) || [];
         const disease_start_dates = data.diseases?.map(d => d?.startDate || null) || [];
         
@@ -65,6 +74,7 @@ class MedicalHistory {
 
         return {
             ...data,
+            name: data.name, // لا نسمح بـ null
             phone_number: data.phone_number || null,
             date_of_birth: data.date_of_birth || null,
             address: data.address || null,
@@ -90,6 +100,7 @@ class MedicalHistory {
         const query = `
             INSERT INTO medical_history (
                 user_id,
+                name,
                 phone_number, 
                 date_of_birth, 
                 address,
@@ -102,12 +113,13 @@ class MedicalHistory {
                 had_surgeries, 
                 surgeries,
                 surgery_dates
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING *
         `;
 
         const values = [
             preparedData.user_id,
+            preparedData.name,
             preparedData.phone_number,
             preparedData.date_of_birth,
             preparedData.address,
