@@ -23,12 +23,19 @@ const firebaseConfig = {
  */
 class FirebaseManager {
   constructor() {
-    this.app = initializeApp(firebaseConfig);
-    this.auth = getAuth(this.app);
-    
-    // تكوين عنوان إعادة التوجيه
-    this.auth.config.authDomain = process.env.FIREBASE_AUTH_DOMAIN;
-    this.auth.config.redirectUrl = `${authConfig.server.url}/api/auth/callback`;
+    try {
+      this.app = initializeApp(firebaseConfig);
+      this.auth = getAuth(this.app);
+      
+      // تكوين عنوان إعادة التوجيه
+      this.auth.config.authDomain = process.env.FIREBASE_AUTH_DOMAIN;
+      this.auth.config.redirectUrl = `${authConfig.server.url}/api/auth/callback`;
+      
+      console.log('تم تهيئة Firebase بنجاح');
+    } catch (error) {
+      console.error('خطأ في تهيئة Firebase:', error);
+      throw error;
+    }
   }
 
   static getInstance() {

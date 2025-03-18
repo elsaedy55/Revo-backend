@@ -1,4 +1,4 @@
-import { pool } from '../config/database.js';
+import db from '../config/database.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -6,9 +6,8 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// دالة لتنفيذ ملفات الترحيل
 async function runMigrations() {
-    const client = await pool.connect();
+    const client = await db.pool.connect();
     
     try {
         // إنشاء جدول لتتبع الترحيلات المنفذة
@@ -29,14 +28,12 @@ async function runMigrations() {
         for (const file of files) {
             const migrationName = path.basename(file, '.sql');
             
-            // التحقق مما إذا تم تنفيذ الترحيل مسبقًا
             const { rows } = await client.query(
                 'SELECT * FROM migrations WHERE name = $1',
                 [migrationName]
             );
 
             if (rows.length === 0) {
-                // قراءة وتنفيذ ملف الترحيل
                 const sql = fs.readFileSync(
                     path.join(migrationsDir, file),
                     'utf-8'
@@ -57,7 +54,7 @@ async function runMigrations() {
                     throw error;
                 }
             } else {
-                console.log(`⏭️ تم تخطي الترحيل ${migrationName} (تم تنفيذه مسبقًا)`);
+                console.log(`⏭️ تم تخطي الترحيل ${migrationName} (تم تنفيذه مسبقاً)`);
             }
         }
         
@@ -70,5 +67,4 @@ async function runMigrations() {
     }
 }
 
-// تنفيذ الترحيلات
 runMigrations().catch(console.error);

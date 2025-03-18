@@ -14,6 +14,15 @@ import jwt from 'jsonwebtoken';
 
 const router = express.Router();
 
+// تهيئة Passport
+passport.serializeUser((user, done) => {
+    done(null, user);
+});
+
+passport.deserializeUser((user, done) => {
+    done(null, user);
+});
+
 // وسيط للتحقق من التوكن
 const verifyToken = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
@@ -40,15 +49,17 @@ const verifyToken = (req, res, next) => {
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: `${authConfig.server.url}/api/auth/google/callback`
-}, async (accessToken, refreshToken, profile, done) => {
+    callbackURL: process.env.GOOGLE_CALLBACK_URL,
+    passReqToCallback: true
+}, async (req, accessToken, refreshToken, profile, done) => {
     try {
-        return done(null, {
+        const user = {
             id: profile.id,
             email: profile.emails[0].value,
             name: profile.displayName,
-            photoUrl: profile.photos[0].value
-        });
+            photoUrl: profile.photos[0]?.value
+        };
+        return done(null, user);
     } catch (error) {
         return done(error, null);
     }
@@ -59,6 +70,23 @@ router.post('/register', validateRegisterData, authController.register.bind(auth
 router.post('/login', validateLoginData, authController.login.bind(authController));
 router.post('/google/token', validateGoogleLoginData, authController.googleLogin.bind(authController));
 
+// مسارات مصادقة Google
+router.get('/google', (req, res, next) => {
+    passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        accessType: 'offline',
+        prompt: 'consent'
+    })(req, res, next);
+});
+
+router.get('/google/callback', 
+    passport.authenticate('google', { 
+        session: false,
+        failureRedirect: '/api/auth/error'
+    }),
+    authController.handleGoogleCallback.bind(authController)
+);
+
 // مسارات إعادة تعيين كلمة المرور
 router.post('/forgot-password', validateForgotPasswordData, (req, res) => {
     authController.forgotPassword(req, res);
@@ -67,16 +95,6 @@ router.post('/forgot-password', validateForgotPasswordData, (req, res) => {
 router.post('/reset-password', validateResetPasswordData, (req, res) => {
     authController.resetPassword(req, res);
 });
-
-// مسارات مصادقة Google
-router.get('/google', passport.authenticate('google', {
-    scope: ['profile', 'email']
-}));
-
-router.get('/google/callback', passport.authenticate('google', { 
-    session: false,
-    failureRedirect: '/api/auth/error' 
-}), authController.handleGoogleCallback.bind(authController));
 
 // التحقق من حالة المصادقة
 router.get('/status', verifyToken, (req, res) => {
@@ -104,7 +122,8 @@ router.get('/logout', (req, res) => {
 router.get('/error', (req, res) => {
     res.status(401).json({
         success: false,
-        message: 'فشلت عملية المصادقة'
+        message: 'فشلت عملية المصادقة',
+        error: req.flash('error')
     });
 });
 

@@ -7,7 +7,7 @@ import {
     updateProfile,
     GoogleAuthProvider,
     signInWithCredential,
-    sendPasswordResetEmail as sendPasswordReset,
+    sendPasswordResetEmail,
     verifyPasswordResetCode,
     confirmPasswordReset
 } from 'firebase/auth';
@@ -18,9 +18,13 @@ class AuthService {
      */
     async forgotPassword(email) {
         try {
-            await sendPasswordReset(auth, email);
-            return true;
+            await sendPasswordResetEmail(auth, email);
+            return {
+                success: true,
+                message: 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني'
+            };
         } catch (error) {
+            console.error('خطأ في إرسال رابط إعادة تعيين كلمة المرور:', error);
             throw this._handleFirebaseError(error);
         }
     }

@@ -10,10 +10,18 @@ class MedicalHistoryController {
      */
     async create(req, res) {
         try {
-            // التحقق من وجود البيانات المطلوبة
-            const requiredFields = ['phone_number', 'date_of_birth', 'address'];
+            // التحقق من وجود البيانات الإجبارية
+            const requiredFields = [
+                'phone_number', 
+                'date_of_birth', 
+                'address',
+                'has_diseases',
+                'takes_medications',
+                'had_surgeries'
+            ];
+
             for (const field of requiredFields) {
-                if (!req.body[field]) {
+                if (req.body[field] === undefined || req.body[field] === '') {
                     return res.status(400).json({
                         success: false,
                         message: `حقل ${field} مطلوب`
@@ -21,7 +29,35 @@ class MedicalHistoryController {
                 }
             }
 
-            const medicalRecord = await MedicalHistory.create(req.body);
+            // التحقق من البيانات المرتبطة
+            if (req.body.has_diseases && (!req.body.diseases || !req.body.diseases.length)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'يجب إضافة قائمة الأمراض عند اختيار وجود أمراض'
+                });
+            }
+
+            if (req.body.takes_medications && (!req.body.medications || !req.body.medications.length)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'يجب إضافة قائمة الأدوية عند اختيار تناول الأدوية'
+                });
+            }
+
+            if (req.body.had_surgeries && (!req.body.surgeries || !req.body.surgeries.length)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'يجب إضافة قائمة العمليات الجراحية عند اختيار وجود عمليات'
+                });
+            }
+
+            // إضافة معرف المستخدم من التوكن
+            const medicalRecordData = {
+                ...req.body,
+                user_id: req.userId
+            };
+
+            const medicalRecord = await MedicalHistory.create(medicalRecordData);
             
             res.status(201).json({
                 success: true,
@@ -67,14 +103,48 @@ class MedicalHistoryController {
     }
 
     /**
+     * جلب جميع السجلات الطبية للمستخدم
+     */
+    async getAllByUser(req, res) {
+        try {
+            const medicalRecords = await MedicalHistory.findByUserId(req.userId);
+            
+            res.json({
+                success: true,
+                data: medicalRecords
+            });
+        } catch (error) {
+            console.error('خطأ في جلب السجلات الطبية:', error);
+            res.status(500).json({
+                success: false,
+                message: 'حدث خطأ أثناء استرجاع السجلات الطبية',
+                error: error.message
+            });
+        }
+    }
+
+    /**
      * تحديث سجل طبي
      */
     async update(req, res) {
         try {
-            // التحقق من وجود البيانات المطلوبة
-            const requiredFields = ['phone_number', 'date_of_birth', 'address'];
+            console.log(`[🔄 UPDATE] Attempting to update medical history ID: ${req.params.id}`);
+            console.log(`[👤 USER] User ID from token: ${req.userId}`);
+            console.log('[📝 DATA] Request body:', JSON.stringify(req.body, null, 2));
+
+            // التحقق من وجود البيانات الإجبارية
+            const requiredFields = [
+                'phone_number', 
+                'date_of_birth', 
+                'address',
+                'has_diseases',
+                'takes_medications',
+                'had_surgeries'
+            ];
+
             for (const field of requiredFields) {
-                if (!req.body[field]) {
+                if (req.body[field] === undefined || req.body[field] === '') {
+                    console.log(`[❌ VALIDATION] Missing required field: ${field}`);
                     return res.status(400).json({
                         success: false,
                         message: `حقل ${field} مطلوب`
@@ -82,26 +152,64 @@ class MedicalHistoryController {
                 }
             }
 
+            // التحقق من البيانات المرتبطة
+            if (req.body.has_diseases && (!req.body.diseases || !req.body.diseases.length)) {
+                console.log('[❌ VALIDATION] Missing diseases data while has_diseases is true');
+                return res.status(400).json({
+                    success: false,
+                    message: 'يجب إضافة قائمة الأمراض عند اختيار وجود أمراض'
+                });
+            }
+
+            if (req.body.takes_medications && (!req.body.medications || !req.body.medications.length)) {
+                console.log('[❌ VALIDATION] Missing medications data while takes_medications is true');
+                return res.status(400).json({
+                    success: false,
+                    message: 'يجب إضافة قائمة الأدوية عند اختيار تناول الأدوية'
+                });
+            }
+
+            if (req.body.had_surgeries && (!req.body.surgeries || !req.body.surgeries.length)) {
+                console.log('[❌ VALIDATION] Missing surgeries data while had_surgeries is true');
+                return res.status(400).json({
+                    success: false,
+                    message: 'يجب إضافة قائمة العمليات الجراحية عند اختيار وجود عمليات'
+                });
+            }
+
+            console.log('[🔄 DB] Executing update query...');
             const medicalRecord = await MedicalHistory.update(req.params.id, req.body);
             
             if (!medicalRecord) {
+                console.log('[❌ DB] No medical record found with ID:', req.params.id);
                 return res.status(404).json({
                     success: false,
                     message: 'لم يتم العثور على السجل الطبي'
                 });
             }
 
+            console.log('[✅ SUCCESS] Successfully updated medical record:', medicalRecord.id);
             res.json({
                 success: true,
                 message: 'تم تحديث السجل الطبي بنجاح',
                 data: medicalRecord
             });
         } catch (error) {
-            console.error('خطأ في تحديث السجل الطبي:', error);
+            console.error('[❌ ERROR] Error updating medical record:', error);
+            console.error('[📚 STACK]', error.stack);
             res.status(500).json({
                 success: false,
                 message: 'حدث خطأ أثناء تحديث السجل الطبي',
-                error: error.message
+                error: error.message,
+                details: process.env.NODE_ENV === 'development' ? {
+                    path: req.path,
+                    method: req.method,
+                    params: req.params,
+                    query: req.query,
+                    body: req.body,
+                    userId: req.userId,
+                    stack: error.stack
+                } : undefined
             });
         }
     }

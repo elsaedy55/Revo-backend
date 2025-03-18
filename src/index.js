@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import passport from 'passport';
+import session from 'express-session';
 import authRoutes from './routes/auth.routes.js';
 import medicalHistoryRoutes from './routes/medicalHistory.routes.js';
 import { authConfig } from './config/auth.config.js';
@@ -24,8 +25,20 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// إعداد الجلسات
+app.use(session({
+    secret: process.env.JWT_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000 // 24 ساعة
+    }
+}));
+
 // تهيئة Passport
 app.use(passport.initialize());
+app.use(passport.session());
 
 // تكوين المسارات
 app.use('/api/auth', authRoutes);
@@ -43,7 +56,7 @@ app.get('/', (req, res) => {
 app.use((req, res) => {
     res.status(404).json({
         success: false,
-        message: 'المسار غير موجود'
+        message: `المسار غير موجود: ${req.originalUrl}`
     });
 });
 

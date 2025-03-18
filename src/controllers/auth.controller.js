@@ -107,18 +107,19 @@ class AuthController {
         try {
             const { email } = req.body;
             
-            authService.validateRequiredFields(
-                { email },
-                ['email']
-            );
+            if (!email) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'البريد الإلكتروني مطلوب'
+                });
+            }
 
-            await authService.forgotPassword(email);
+            const result = await authService.forgotPassword(email);
             
-            res.status(200).json({
-                success: true,
-                message: 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني'
-            });
+            res.status(200).json(result);
         } catch (error) {
+            console.error('خطأ في عملية نسيان كلمة المرور:', error);
+            
             this._handleAuthError(error, res);
         }
     }

@@ -1,19 +1,17 @@
 import pkg from 'pg';
 const { Pool } = pkg;
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 /**
  * تكوين اتصال قاعدة البيانات
  */
 const pool = new Pool({
-    user: process.env.POSTGRES_USER,
-    host: process.env.POSTGRES_HOST,
-    database: process.env.POSTGRES_DB,
-    password: process.env.POSTGRES_PASSWORD,
-    port: process.env.POSTGRES_PORT,
-    // خيارات إضافية لتحسين الأداء
-    max: 20, // الحد الأقصى لعدد الاتصالات في المجمع
-    idleTimeoutMillis: 30000, // وقت انتهاء صلاحية الاتصال الخامل
-    connectionTimeoutMillis: 2000, // وقت انتهاء محاولة الاتصال
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 // التحقق من الاتصال عند بدء التشغيل
@@ -32,7 +30,7 @@ pool.connect((err, client, release) => {
  * @param {Array} params - معلمات الاستعلام
  * @returns {Promise} نتيجة الاستعلام
  */
-export async function query(text, params) {
+async function query(text, params) {
     const start = Date.now();
     try {
         const res = await pool.query(text, params);
@@ -49,7 +47,7 @@ export async function query(text, params) {
  * الحصول على اتصال من المجمع لتنفيذ عدة استعلامات
  * @returns {Promise<PoolClient>} اتصال قاعدة البيانات
  */
-export async function getClient() {
+async function getClient() {
     const client = await pool.connect();
     const query = client.query;
     const release = client.release;
@@ -68,8 +66,23 @@ export async function getClient() {
     return client;
 }
 
+/**
+ * اختبار الاتصال بقاعدة البيانات
+ * @returns {Promise<boolean>} نتيجة الاختبار
+ */
+async function testConnection() {
+    try {
+        await pool.query('SELECT NOW()');
+        return true;
+    } catch (error) {
+        console.error('فشل اختبار الاتصال:', error);
+        return false;
+    }
+}
+
 export default {
+    pool,
     query,
     getClient,
-    pool
+    testConnection
 };

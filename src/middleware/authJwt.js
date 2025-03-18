@@ -35,19 +35,29 @@ function extractAndVerifyToken(authHeader) {
 
     try {
         const decoded = jwt.verify(token, authConfig.jwt.secret);
-        return decoded.id || decoded.uid;
+        // التحقق من وجود معرف المستخدم في أي من الحقلين
+        const userId = decoded.uid || decoded.id;
+        if (!userId) {
+            throw new AuthError(401, 'التوكن لا يحتوي على معرف المستخدم');
+        }
+        return userId;
     } catch (error) {
-        throw new AuthError(401, 'غير مصرح به!', { error: error.message });
+        if (error instanceof AuthError) {
+            throw error;
+        }
+        throw new AuthError(401, 'التوكن غير صالح', { error: error.message });
     }
 }
 
 export function verifyToken(req, res, next) {
     try {
         const userId = extractAndVerifyToken(req.headers.authorization);
+        // تخزين معرف المستخدم في الطلب
         req.userId = userId;
         next();
     } catch (error) {
         const response = {
+            success: false,
             message: error.message,
             ...error.details
         };
